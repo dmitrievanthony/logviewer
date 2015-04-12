@@ -1,0 +1,77 @@
+body {
+    font-family: monospace;
+    font-size: 16px;
+    color: #E8BF6A;
+    background: #313335;
+}
+
+#files {
+    border-right: 1px dotted #555555;
+    float: left;
+    width: 20%;
+    height: 100%;
+}
+
+.file {
+    padding: 4px;
+    cursor: pointer;
+}
+
+.file:hover {
+    background: #0F293E;
+}
+
+#log {
+    font-size: 14px;
+    background: #2B2B2B;
+    float: right;
+    width: calc(80% - 8px);
+    height: 100%;
+}
+
+#log-row-number {
+    float: left;
+    width: 40px;
+    height: 100%;
+}
+
+#log-row-content {
+    float: left;
+    height: 100%;
+    width: calc(100% - 70px);
+    overflow: scroll;
+    padding-left: 10px;
+}
+
+#log-scroll {
+    float: right;
+    width: 10px;
+    height: 100%;
+    margin-right: 10px;
+    cursor: pointer;
+}
+
+#log-scroll:hover {
+    background: #333333;
+}
+
+#slider {
+    background: #555555;
+    height: 20px;
+    width: 10px;
+    cursor: default;
+    border-radius: 4px;
+    position: absolute;
+}
+
+.log-number, .log-message {
+    font-size: 14px;
+    margin: 6px 0 0;
+    padding-left: 4px;
+    height: 14px;
+    color: #B1B9B9;
+}
+
+.file.active {
+    color: #B1B9B9;
+}
