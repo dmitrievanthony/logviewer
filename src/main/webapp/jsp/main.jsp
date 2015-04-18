@@ -1,3 +1,4 @@
+<%@ page import="org.logviewer.web.util.WebKeys" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <html>
     <head>

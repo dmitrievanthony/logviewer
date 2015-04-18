@@ -128,6 +128,30 @@ logviewer.File.prototype.randomAccess = function(n) {
     this.position = Math.floor(n * this.length);
     this.reload();
 };
+logviewer.File.prototype.search = function(regex) {
+    var file = this;
+    if (regex != undefined) {
+        logviewer.openConversation(function(conversationId) {
+            $.get("/search", {
+                fileName: file.name,
+                conversationId: conversationId,
+                regex: regex
+            }, function(firstId) {
+                file.position = firstId;
+                file.reload();
+            });
+        });
+    }
+    else {
+        $.get("/search", {
+            fileName: this.name,
+            conversationId: logviewer.conversationId
+        }, function(firstId) {
+            file.position = firstId;
+            file.reload();
+        });
+    }
+};
 logviewer.setHashUrl = function(name, position, length) {
     logviewer.hashUrl = "#" + name + ":" + position + "/" + length;
 };
@@ -170,4 +194,26 @@ logviewer._refreshSlider = function() {
 logviewer._onFailLoad = function() {
     $("#log-row-number, #log-row-content").empty();
     $("#log-row-content").html("Loading error!");
+};
+logviewer.openConversation = function(callback) {
+    $.get('/api/util/conversation/open', function(response) {
+        logviewer.conversationId = response;
+        if (typeof callback == 'function') callback(response);
+    });
+};
+logviewer.closeConversation = function(callback) {
+    $.get('/api/util/conversation/close', {
+        conversationId: logviewer.conversationId
+    }, function(response) {
+        if (typeof callback == 'function') {
+            callback(response);
+        }
+    });
+};
+logviewer.getAllConversations = function(callback) {
+    $.get('/api/util/conversation/list', function(response) {
+        if (typeof callback == 'function') {
+            callback(response);
+        }
+    });
 };

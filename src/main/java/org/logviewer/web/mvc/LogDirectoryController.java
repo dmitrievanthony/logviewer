@@ -1,4 +1,4 @@
-package org.logviewer.web;
+package org.logviewer.web.mvc;
 
 import org.logviewer.core.LogDirectory;
 import org.springframework.beans.factory.annotation.Autowired;
