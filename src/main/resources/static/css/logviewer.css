@@ -26,7 +26,7 @@ body {
     background: #2B2B2B;
     float: right;
     width: calc(80% - 8px);
-    height: 100%;
+    height: calc(100% - 32px);
 }
 
 #log-row-number {
@@ -74,4 +74,32 @@ body {
 
 .file.active {
     color: #B1B9B9;
+}
+
+.match {
+    color: #D1675A;
+    text-decoration: underline;
+}
+
+#log-controls {
+    width: 100%;
+    background: #313335;
+    float: left;
+    height: 20px;
+    padding: 8px 0px 12px 12px;
+}
+
+#log-search-next {
+    cursor: pointer;
+}
+
+#log-search input {
+    color: #E8BF6A;
+    background: none;
+    border: 1px solid;
+    -webkit-box-shadow: none;
+    -moz-box-shadow: none;
+    box-shadow: none;
+    text-shadow: none;
+    padding: 4px 6px;
 }

@@ -38,19 +38,39 @@ $(function() {
     $("#slider").mousedown(function() {
         sliderScrollFlag = true;
         $(document).mousemove(function(event) {
-            var y = event.pageY - $("#log-scroll").position().top - 10;
-            var h = $("#log-scroll").height();
+            var scroll = $("#log-scroll");
+            var y = event.pageY - scroll.position().top - 10;
+            var h = scroll.height();
             if (y < 0) y = 0;
             else if (y > h) y = h;
             logviewer.activeFile.randomAccess(y / h);
         });
     });
     $("#log-scroll").mousedown(function(event) {
-        var y = event.pageY - $("#log-scroll").position().top - 10;
-        var h = $("#log-scroll").height();
+        var scroll = $("#log-scroll");
+        var y = event.pageY - scroll.position().top - 10;
+        var h = scroll.height();
         if (y < 0) y = 0;
         if (y > h) y = h;
         logviewer.activeFile.randomAccess(y / h);
+    });
+
+    // Search input processing
+    $("#log-search-input").keydown(function(event) {
+        if (event.keyCode == 13) { // enter
+            var regex = $("#log-search-input").val();
+            if (logviewer.activeFile != undefined) {
+                if (logviewer.activeFile.searchInstance != undefined && logviewer.activeFile.searchInstance.regex == regex) {
+                    logviewer.activeFile.search(); // continue search
+                }
+                else logviewer.activeFile.search(regex); // new search
+            }
+        }
+    });
+    $("#log-search-next").click(function(event) {
+        if (logviewer.activeFile != undefined && logviewer.activeFile.searchInstance != undefined) {
+            logviewer.activeFile.search();
+        }
     });
 });
 
@@ -63,7 +83,7 @@ logviewer.File = function(name, length, position, windowSize) {
     this.position = position;
     this.windowSize = windowSize;
 };
-logviewer.File.prototype.reload = function() {
+logviewer.File.prototype.reload = function(callback) {
     logviewer.setHashUrl(this.name, this.position, this.length);
     $.get("/records", {
         fileName: this.name,
@@ -77,6 +97,7 @@ logviewer.File.prototype.reload = function() {
             $("#log-row-content").append(html[1]);
         });
         logviewer._refreshSlider();
+        if (typeof callback == "function") callback();
     }).fail(logviewer._onFailLoad);
 };
 logviewer.File.prototype.up = function() {
@@ -130,27 +151,43 @@ logviewer.File.prototype.randomAccess = function(n) {
 };
 logviewer.File.prototype.search = function(regex) {
     var file = this;
+    if (file.searchInstance == undefined && regex == undefined)
+        throw 'Regex should not be null for search initialization';
+    var _search = function(regex) {
+        var data = { fileName: file.name, conversationId: file.searchInstance.conversationId };
+        if (regex != undefined) data.regex = '.*' + regex + '.*';
+        var finished = $("#finished");
+        $.get('/search', data).done(function(response, statusText) {
+            if (statusText != 'nocontent') {
+                file.position = response;
+                file.reload(function() {
+                    console.log("reload!");
+                    var row = $('#log-row-content').find('.log-message:first-child');
+                    var html = row.html().replace(new RegExp(file.searchInstance.regex, 'g'), '<span class="match">$&</span>');
+                    row.html(html);
+                    finished.hide();
+                });
+            }
+            else {
+                file.searchInstance = undefined;
+                finished.show();
+                console.log('nocontent');
+            }
+        }).fail(function() {
+            file.searchInstance = undefined;
+            logviewer.closeConversation(file.searchInstance.conversationId);
+        });
+    };
     if (regex != undefined) {
         logviewer.openConversation(function(conversationId) {
-            $.get("/search", {
-                fileName: file.name,
+            file.searchInstance = {
                 conversationId: conversationId,
                 regex: regex
-            }, function(firstId) {
-                file.position = firstId;
-                file.reload();
-            });
+            };
+            _search(regex);
         });
     }
-    else {
-        $.get("/search", {
-            fileName: this.name,
-            conversationId: logviewer.conversationId
-        }, function(firstId) {
-            file.position = firstId;
-            file.reload();
-        });
-    }
+    else _search();
 };
 logviewer.setHashUrl = function(name, position, length) {
     logviewer.hashUrl = "#" + name + ":" + position + "/" + length;
@@ -196,24 +233,30 @@ logviewer._onFailLoad = function() {
     $("#log-row-content").html("Loading error!");
 };
 logviewer.openConversation = function(callback) {
-    $.get('/api/util/conversation/open', function(response) {
-        logviewer.conversationId = response;
+    $.get('/api/util/conversation/open').done(function(response) {
+        console.log("conversationId = " + response);
         if (typeof callback == 'function') callback(response);
+    }).fail(function() {
+        throw 'Conversation can not be opened';
     });
 };
 logviewer.closeConversation = function(callback) {
     $.get('/api/util/conversation/close', {
         conversationId: logviewer.conversationId
-    }, function(response) {
+    }).done(function(response) {
         if (typeof callback == 'function') {
             callback(response);
         }
+    }).fail(function() {
+        throw 'Conversation can not be closed';
     });
 };
 logviewer.getAllConversations = function(callback) {
-    $.get('/api/util/conversation/list', function(response) {
+    $.get('/api/util/conversation/list').done(function(response) {
         if (typeof callback == 'function') {
             callback(response);
         }
+    }).fail(function() {
+        throw 'List of conversations can not be gotten';
     });
 };
