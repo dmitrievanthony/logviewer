@@ -1,0 +1,9 @@
+spring.mvc.view:
+  prefix: /jsp/
+  suffix: .jsp
+
+logviewer:
+  thread-pool-size: 10
+  index-array-size: 65536
+  extensions: .log
+  base-dir: /Users/dmitant
