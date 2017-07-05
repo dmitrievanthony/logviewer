@@ -6,6 +6,8 @@ import org.logviewer.core.index.IndexStrategy;
 import org.logviewer.core.index.IndexStrategyState;
 import org.logviewer.util.FileChannelImplUtil;
 import org.logviewer.util.UnsafeUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.File;
@@ -22,6 +24,8 @@ import java.util.List;
  * reflection call of mmap method of FileChannelImpl and Unsafe interface is used instead.
  */
 public class MemoryMappedLogFile implements LogFile, Closeable {
+
+    private static final Logger log = LoggerFactory.getLogger(MemoryMappedLogFile.class);
 
     private final File file;
 
@@ -44,7 +48,7 @@ public class MemoryMappedLogFile implements LogFile, Closeable {
         this.baseMmapAddress = FileChannelImplUtil.mmap(randomAccessFile.getChannel(), 0, 0L, randomAccessFile.length());
         long time = System.currentTimeMillis();
         this.indexStrategy.init(new MemoryMappedFileByteIterator(), (byte) SPLIT_CHAR);
-        System.out.println("Indexing of [" + file.getName() + "] done (" + (System.currentTimeMillis() - time) + "ms)");
+        log.info("Indexing of {} done ({}ms)", file.getName(), System.currentTimeMillis() - time);
     }
 
     @Override
@@ -68,9 +72,9 @@ public class MemoryMappedLogFile implements LogFile, Closeable {
                 builder.append(ch);
             }
         } catch (IOException e) {
-            e.printStackTrace(System.out);
+            log.error("Cannot read a row number {} of {}", n, file.getName(), e);
         }
-        throw new ArithmeticException(); // write to log, unreachable state
+        throw new IllegalStateException(); // unreachable state
     }
 
     @Override
@@ -122,9 +126,9 @@ public class MemoryMappedLogFile implements LogFile, Closeable {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace(System.out);
+            log.error("Cannot read {} rows starts with {} of {}", count, first, file.getName(), e);
         }
-        throw new ArithmeticException(); // write to log, unreachable state
+        throw new IllegalStateException(); // unreachable state
     }
 
     /*
@@ -161,7 +165,7 @@ public class MemoryMappedLogFile implements LogFile, Closeable {
                 }
             }
         }
-        throw new ArithmeticException(); // write to log, unreachable state
+        throw new IllegalStateException(); // unreachable state
     }
 
     @Override
@@ -196,7 +200,7 @@ public class MemoryMappedLogFile implements LogFile, Closeable {
         try {
             iterator = new MemoryMappedFileRowIterator();
         } catch (IOException e) {
-            e.printStackTrace(System.out);
+            log.error("Cannot create memory mapped file row iterator", e);
         }
         return iterator;
     }

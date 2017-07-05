@@ -2,6 +2,8 @@ package org.logviewer.core;
 
 import org.logviewer.core.cache.NoCacheStrategy;
 import org.logviewer.core.index.InMemoryIndexStrategy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,6 +24,8 @@ import java.util.stream.Collectors;
  * loading its.
  */
 public class LogDirectory {
+
+    private static final Logger log = LoggerFactory.getLogger(LogDirectory.class);
 
     private final File directory;
 
@@ -51,8 +55,7 @@ public class LogDirectory {
         // loading all files
         File[] files = directory.listFiles();
         if (files != null) {
-            Arrays.asList(files)
-                    .stream()
+            Arrays.stream(files)
                     .filter(logFileFilter)
                     .forEach(file -> executors.submit(() -> fileConsumer.accept(file, StandardWatchEventKinds.ENTRY_CREATE)));
         }
@@ -66,12 +69,9 @@ public class LogDirectory {
     }
 
     public List<LogFile> getLogFiles() {
-        return logFileMap.values().stream().sorted(new Comparator<LogFile>() {
-            @Override
-            public int compare(LogFile o1, LogFile o2) {
-                return Long.valueOf(o1.lastModified()).compareTo(o2.lastModified());
-            }
-        }).collect(Collectors.toList());
+        return logFileMap.values().stream()
+                .sorted((o1, o2) -> Long.valueOf(o1.lastModified()).compareTo(o2.lastModified()))
+                .collect(Collectors.toList());
     }
 
     private class FileConsumer implements BiConsumer<File, WatchEvent.Kind> {
@@ -86,7 +86,7 @@ public class LogDirectory {
                     logFileMap.put(file.getName(), logFile);
                 }
             } catch (IOException e) {
-                e.printStackTrace(System.out);
+                log.error("Cannot create memory mapped log file", e);
             }
         }
 
@@ -120,7 +120,7 @@ public class LogDirectory {
                     }
                 }
             } catch (IOException e) {
-                e.printStackTrace(System.out);
+                log.error("Log directory observer stopped", e);
             }
         }
     }

@@ -4,7 +4,7 @@ import java.util.List;
 
 public interface LogFile extends Iterable<LogRecord> {
 
-    static final char SPLIT_CHAR = '\n';
+    char SPLIT_CHAR = '\n';
 
     String getName();
 
