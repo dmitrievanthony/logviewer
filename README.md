@@ -5,3 +5,4 @@
 - Simple and clear web UI
 - Viewing of big log files
 - Search in big log files
+Test
